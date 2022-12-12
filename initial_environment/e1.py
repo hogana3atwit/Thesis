@@ -1,6 +1,8 @@
 import sys
 import pyvisgraph as vg
 import argparse
+from collections import defaultdict
+import heapq as heap
 
 #helper function to find the [x, y] location of the agent in the grid at any given time
 def agentLocation(state):
@@ -68,6 +70,27 @@ def expand(state, path, parent, blocked, agentRow, agentColumn):
 def pathCost(node):
   return len(node["path"])
 
+def build_graph(G, startingNode):
+  visited = set()
+  parentsMap = {}
+  pq = []
+  nodeCosts = defaultdict(lambda: float('inf'))
+  nodeCosts[startingNode] = 0
+  heap.heappush(pq, (0, startingNode))
+  while pq:
+    # go greedily by always extending the shorter cost nodes first
+    _, node = heap.heappop(pq)
+    visited.add(node)
+    for adjNode, weight in G[node].items():
+      if adjNode in visited:
+        continue
+      newCost = nodeCosts[node] + weight
+      if nodeCosts[adjNode] > newCost:
+        parentsMap[adjNode] = node
+        nodeCosts[adjNode] = newCost
+        heap.heappush(pq, (newCost, adjNode))
+  return parentsMap, nodeCosts
+
 def main():
   #read in environment 
   lines = []
@@ -86,8 +109,12 @@ def main():
     p = [vg.Point(blocked[i][0], blocked[i][1]), vg.Point(blocked[i][0]+1, blocked[i][1]), vg.Point(blocked[i][0], blocked[i][1]+1), vg.Point(blocked[i][0]+1, blocked[i][1]+1)]
     obstacles.append(p)
 
-  open_list = [{"state": lines, "time": 1, "goal": False, "agentRow": agent[0][0], "agentColumn": agent[0][1], "action": "none", "path": "", "parent": None}]
+  #build vis graph from scratch
+  #each set of 4 points a node in the graph?
+  #vis_graph = build_graph(obstacles, agent)
 
+  open_list = [{"state": lines, "time": 1, "goal": False, "agentRow": agent[0][0], "agentColumn": agent[0][1], "action": "none", "path": "", "parent": None}]
+  #open_list = obstacles
   closed_list = {}
   nodes_gen = 0
   nodes_exp = 0
