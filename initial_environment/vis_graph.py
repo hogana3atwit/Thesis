@@ -8,6 +8,15 @@ import operator as op
 def findLocation(state, target):
   return [ [x, y] for x, row in enumerate(state) for y, i in enumerate(row) if target in i ]
 
+def connect_points(points):
+  edges = []
+
+  for i in range(len(points)):
+    for j in range(i + 1, len(points)):
+      edges.append((points[i], points[j]))
+
+  return edges
+
 def main():
   #read in environment
   lines = []
@@ -107,8 +116,13 @@ def main():
     #if vg.Point(rows, i) not in graph_vertices:
       #graph_vertices.append(vg.Point(rows, i))
 
+  print(final_graph)
   for i in range(0, len(final_graph)):
     print(final_graph[i])
-      
+
+  # connect edges of graph
+  edges = connect_points(final_graph)
+  print(edges)
+
 if __name__ == "__main__":
   main()
