@@ -4,6 +4,7 @@ import argparse
 from collections import defaultdict
 import heapq as heap
 import operator as op
+import shapely.geometry as geometry
 
 def findLocation(state, target):
   return [ [x, y] for x, row in enumerate(state) for y, i in enumerate(row) if target in i ]
@@ -16,6 +17,18 @@ def connect_points(points):
       edges.append((points[i], points[j]))
 
   return edges
+
+def check_collision(edge, obstacles):
+  print(edge)
+  line = geometry.LineString([[edge[0].x, edge[0].y], [edge[1].x, edge[1].y]])
+  for ob in obstacles:
+    p = geometry.Point(ob)
+    if line.intersects(p):
+      return True
+  return False
+
+def astar(start, goal, graph):
+  print("nothing yet")
 
 def main():
   #read in environment
@@ -38,7 +51,7 @@ def main():
   #find obstacles
   blocked = findLocation(lines, "#")
   goal = findLocation(lines, "G")
-
+  
   print(agent)
   print(blocked)
   print(goal)
@@ -107,15 +120,6 @@ def main():
       else:
         final_graph.append(cur_vert)
 
-  # check any additional walls
-  #for i in range(0, rows):
-    #if vg.Point(i, columns) not in graph_vertices:
-      #graph_vertices.append(vg.Point(i, columns))
-
-  #for i in range(0, columns):
-    #if vg.Point(rows, i) not in graph_vertices:
-      #graph_vertices.append(vg.Point(rows, i))
-
   print(final_graph)
   for i in range(0, len(final_graph)):
     print(final_graph[i])
@@ -123,6 +127,24 @@ def main():
   # connect edges of graph
   edges = connect_points(final_graph)
   print(edges)
+
+  for i in range(0, len(blocked)):
+    if blocked[i][0] == rows - 1:
+      blocked.append([rows, blocked[i][1]])
+    if blocked[i][1] == columns - 1:
+      blocked.append([blocked[i][0], columns])
+    if blocked[i][1] == 0:
+      blocked.append([blocked[i][0], -1])
+  
+  print(blocked)
+  #check and filter out edges with collisions
+  final_edges = list()
+  for i in range(0, len(edges)):
+    cur_check = check_collision(edges[i], blocked)
+    print(cur_check)
+    if cur_check == False:
+      final_edges.append(edges[i])
+  print(final_edges)
 
 if __name__ == "__main__":
   main()
