@@ -27,9 +27,47 @@ def check_collision(edge, obstacles):
       return True
   return False
 
-def astar(start, goal, graph):
-  print("nothing yet")
+def heuristic(node, goal):
+  return abs(node.x - goal.x) + abs(node.y - goal.y)
 
+def astar(start, goal, graph):
+  #print(start)
+  #print(goal)
+
+  open_list = []
+  heap.heappush(open_list, (0, start))
+
+  costs = {start: 0}
+
+  parents = {start: None}
+
+  while open_list:
+    current = heap.heappop(open_list)[1]
+    print(current)
+
+    # returns path when goal is reached
+    if current == goal:
+      path = [current]
+      while parents[current] is not None:
+        current = parents[current]
+        path.append(current)
+        print(path[::-1])
+        return
+      # find neighbors of current point
+    neighbors = []
+    for edge in graph:
+      if edge[0] == current:
+        neighbors.append(edge[1])
+    #print("NEIGHBORS")
+    #print(neighbors)
+    for neighbor in neighbors:
+      cost = costs[current] + (abs(current.x - neighbor.x) + abs(current.y - neighbor.y))
+      #print(cost)
+      if neighbor not in costs or cost < costs[neighbor]:
+        costs[neighbor] = cost
+        parents[neighbor] = current
+        heap.heappush(open_list, (cost + heuristic(neighbor, goal), neighbor))
+  print("never got to goal")
 def main():
   #read in environment
   lines = []
@@ -120,6 +158,8 @@ def main():
       else:
         final_graph.append(cur_vert)
 
+  final_graph.insert(0, vg.Point(agent[0][0], agent[0][1]))
+  final_graph.append(vg.Point(goal[0][0], goal[0][1]))
   print(final_graph)
   for i in range(0, len(final_graph)):
     print(final_graph[i])
@@ -143,8 +183,12 @@ def main():
     cur_check = check_collision(edges[i], blocked)
     print(cur_check)
     if cur_check == False:
-      final_edges.append(edges[i])
+      if edges[i] not in final_edges:
+        final_edges.append(edges[i])
   print(final_edges)
+
+  # run A* for static worlds
+  astar(final_graph[0], final_graph[len(final_graph)-1], final_edges)
 
 if __name__ == "__main__":
   main()
