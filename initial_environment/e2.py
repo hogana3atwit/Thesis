@@ -20,10 +20,15 @@ def connect_points(points):
 
 def check_collision(edge, obstacles):
   print(edge)
-  line = geometry.LineString([[edge[0].x, edge[0].y], [edge[1].x, edge[1].y]])
+  line = geometry.LineString([(edge[0].x, edge[0].y), (edge[1].x, edge[1].y)])
   for ob in obstacles:
-    p = geometry.Point(ob)
-    if line.intersects(p):
+    p = geometry.Polygon([[ob[0], ob[1]], [ob[0], ob[1]+1], [ob[0]+1, ob[1]+1], [ob[0]+1, ob[1]]])
+    #print(p)
+    inter = line.intersection(p)
+    print(inter)
+    inter_points = list(inter.coords)
+    print(inter_points)
+    if len(inter_points) >= 2:
       return True
   return False
 
@@ -166,26 +171,31 @@ def main():
 
   # connect edges of graph
   edges = connect_points(final_graph)
-  print(edges)
+  for i in range(0, len(edges)):
+    print(edges[i])
 
-  for i in range(0, len(blocked)):
-    if blocked[i][0] == rows - 1:
-      blocked.append([rows, blocked[i][1]])
-    if blocked[i][1] == columns - 1:
-      blocked.append([blocked[i][0], columns])
-    if blocked[i][1] == 0:
-      blocked.append([blocked[i][0], -1])
+  #for i in range(0, len(blocked)):
+    #if blocked[i][0] == rows - 1:
+      #blocked.append([rows, blocked[i][1]])
+    #if blocked[i][1] == columns - 1:
+      #blocked.append([blocked[i][0], columns])
+    #if blocked[i][1] == 0:
+      #blocked.append([blocked[i][0], -1])
   
   print(blocked)
   #check and filter out edges with collisions
+  #wall_line = geometry.LineString([rows, 0], [rows, columns]
   final_edges = list()
   for i in range(0, len(edges)):
     cur_check = check_collision(edges[i], blocked)
     print(cur_check)
+    print("--------------------------------------")
     if cur_check == False:
       if edges[i] not in final_edges:
         final_edges.append(edges[i])
-  print(final_edges)
+  
+  for i in range(len(final_edges)):
+    print(final_edges[i])
 
   # run A* for static worlds
   astar(final_graph[0], final_graph[len(final_graph)-1], final_edges)
