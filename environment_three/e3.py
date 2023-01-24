@@ -6,6 +6,9 @@ import heapq as heap
 import operator as op
 import shapely.geometry as geometry
 
+# define dynamic obstacle (1) - start with putting it somewhere close to the goal at a hardcoded position 
+# have to find a way to represent time- "after x time interval, the dynamic obstacle appears"
+
 def findLocation(state, target):
   return [ [x, y] for x, row in enumerate(state) for y, i in enumerate(row) if target in i ]
 
@@ -73,6 +76,7 @@ def astar(start, goal, graph):
         parents[neighbor] = current
         heap.heappush(open_list, (cost + heuristic(neighbor, goal), neighbor))
   print("never got to goal")
+
 def main():
   #read in environment
   lines = []
@@ -115,25 +119,14 @@ def main():
   for i in range(0, len(obstacles)):
     for j in range(0, len(obstacles[i])):
       cur_point = obstacles[i][j]
-      #if cur_point.x == rows or cur_point.y == columns:
-        #if cur_point not in graph_vertices:
-          #graph_vertices.append(cur_point)
-        #continue
-      #if cur_point.x + 1 == rows or cur_point.y + 1 == columns or cur_-1 == 0 or j-1 == 0:
-        #graph_vertices.append(cur_point)
-        #continue
       
       count = 0
       if [cur_point.x, cur_point.y] in blocked:
         count+=1
       if [cur_point.x + 1, cur_point.y] in blocked:
         count+=1
-      #if [cur_point.x - 1, cur_point.y] in blocked:
-        #count+=1
       if [cur_point.x, cur_point.y + 1] in blocked:
         count+=1
-      #if [cur_point.x, cur_point.y - 1] in blocked:
-        #count+=1
       if [cur_point.x + 1, cur_point.y + 1] in blocked:
         count+=1
 
@@ -151,11 +144,8 @@ def main():
           count+=1
     if count == 1:
       if cur_vert.x == rows:
-        #print(cur_vert)
-        #print([int(cur_vert.x-1),int(cur_vert.y)])
         check_list = [int(cur_vert.x-1), int(cur_vert.y)]
         if check_list not in blocked and vg.Point(cur_vert.x - 1, cur_vert.y) in graph_vertices:
-          #print("yes")
           final_graph.append(cur_vert)
       elif cur_vert.y == columns:
         if [int(cur_vert.x), int(cur_vert.y - 1)] not in blocked and vg.Point(cur_vert.x, cur_vert.y - 1) in graph_vertices:
@@ -173,14 +163,6 @@ def main():
   edges = connect_points(final_graph)
   for i in range(0, len(edges)):
     print(edges[i])
-
-  #for i in range(0, len(blocked)):
-    #if blocked[i][0] == rows - 1:
-      #blocked.append([rows, blocked[i][1]])
-    #if blocked[i][1] == columns - 1:
-      #blocked.append([blocked[i][0], columns])
-    #if blocked[i][1] == 0:
-      #blocked.append([blocked[i][0], -1])
   
   print(blocked)
   #check and filter out edges with collisions
@@ -192,13 +174,13 @@ def main():
     print("--------------------------------------")
     if cur_check == False:
       if edges[i] not in final_edges:
-        final_edges.append(edges[i])
+        final_edges.append({"edge": edges[i], "blocked": False})
   
   for i in range(len(final_edges)):
     print(final_edges[i])
 
   # run A* for static worlds
-  astar(final_graph[0], final_graph[len(final_graph)-1], final_edges)
+  #astar(final_graph[0], final_graph[len(final_graph)-1], final_edges)
 
 if __name__ == "__main__":
   main()
