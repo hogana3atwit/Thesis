@@ -8,6 +8,7 @@ import shapely.geometry as geometry
 
 # define dynamic obstacle (1) - start with putting it somewhere close to the goal at a hardcoded position 
 # have to find a way to represent time- "after x time interval, the dynamic obstacle appears"
+# distance and time notion in edge list (before calling A*)
 
 def findLocation(state, target):
   return [ [x, y] for x, row in enumerate(state) for y, i in enumerate(row) if target in i ]
@@ -26,7 +27,6 @@ def check_collision(edge, obstacles):
   line = geometry.LineString([(edge[0].x, edge[0].y), (edge[1].x, edge[1].y)])
   for ob in obstacles:
     p = geometry.Polygon([[ob[0], ob[1]], [ob[0], ob[1]+1], [ob[0]+1, ob[1]+1], [ob[0]+1, ob[1]]])
-    #print(p)
     inter = line.intersection(p)
     print(inter)
     inter_points = list(inter.coords)
@@ -38,7 +38,7 @@ def check_collision(edge, obstacles):
 def heuristic(node, goal):
   return abs(node.x - goal.x) + abs(node.y - goal.y)
 
-def astar(start, goal, graph):
+def astar(start, goal, graph, dynamic_list):
   #print(start)
   #print(goal)
 
@@ -51,7 +51,6 @@ def astar(start, goal, graph):
 
   while open_list:
     current = heap.heappop(open_list)[1]
-    print(current)
 
     # returns path when goal is reached
     if current == goal:
@@ -61,16 +60,23 @@ def astar(start, goal, graph):
         path.append(current)
         print(path[::-1])
         return
-      # find neighbors of current point
+    # find neighbors of current point
     neighbors = []
     for edge in graph:
-      if edge[0] == current:
-        neighbors.append(edge[1])
-    #print("NEIGHBORS")
-    #print(neighbors)
+      if edge['edge'][0] == current:
+        neighbors.append(edge['edge'][1])
+    # check obstacle list for dynamic obstacles
+    # expand for smaller g(n)
+    # check if an edge exists as a function of g(n)
     for neighbor in neighbors:
       cost = costs[current] + (abs(current.x - neighbor.x) + abs(current.y - neighbor.y))
-      #print(cost)
+      if cost >= dynamic_list[0]['emergence'] and check_collision((current, neighbor), [d.get('location') for d in dynamic_list]):
+        print("Collision with Dynamic Obstacle")
+        print(current)
+        print(neighbor)
+        continue
+      # distance can equate to time- g(n)
+      # True False on blocked spaces can relate to g(n)
       if neighbor not in costs or cost < costs[neighbor]:
         costs[neighbor] = cost
         parents[neighbor] = current
@@ -111,8 +117,12 @@ def main():
     for j in range(0, len(obstacles[i])):
       print(obstacles[i][j])
 
-  #print(obstacles)
   print("-----------------------------------------------")
+
+  #define dynamic obstacle(s) : 1 for env 3
+  dynamic_obstacles = list()
+  dynamic_obstacles.append({"location": [goal[0][0]-1, goal[0][1]-2], "emergence": 3})
+  print(dynamic_obstacles)
 
   graph_vertices = list()
   # build meaningful corners for visibility graph
@@ -166,7 +176,6 @@ def main():
   
   print(blocked)
   #check and filter out edges with collisions
-  #wall_line = geometry.LineString([rows, 0], [rows, columns]
   final_edges = list()
   for i in range(0, len(edges)):
     cur_check = check_collision(edges[i], blocked)
@@ -174,13 +183,17 @@ def main():
     print("--------------------------------------")
     if cur_check == False:
       if edges[i] not in final_edges:
-        final_edges.append({"edge": edges[i], "blocked": False})
+        # could add distance value (equivalent to time) -- "this is the current time does the edge exist"
+	# current time + time to get to obstacle (may be valid when departing but edge does not exist when reaching destination)
+	# calculate distance here since needed for timing
+        # use information of when obstacle appears
+        final_edges.append({"edge": edges[i], "blocked": False, "distance": abs(edges[i][0].x-edges[i][1].x) + abs(edges[i][0].y-edges[i][1].y)})
   
   for i in range(len(final_edges)):
     print(final_edges[i])
 
   # run A* for static worlds
-  #astar(final_graph[0], final_graph[len(final_graph)-1], final_edges)
+  astar(final_graph[0], final_graph[len(final_graph)-1], final_edges, dynamic_obstacles)
 
 if __name__ == "__main__":
   main()
