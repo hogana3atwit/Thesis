@@ -69,12 +69,17 @@ def astar(start, goal, graph, dynamic_list):
     # expand for smaller g(n)
     # check if an edge exists as a function of g(n)
     for neighbor in neighbors:
+      collision = False
       cost = costs[current] + (abs(current.x - neighbor.x) + abs(current.y - neighbor.y))
-      if cost >= dynamic_list[0]['emergence'] and check_collision((current, neighbor), [d.get('location') for d in dynamic_list]):
-        print("Collision with Dynamic Obstacle")
-        print(current)
-        print(neighbor)
-        print()
+      for i in range(0, len(dynamic_list)):
+        if cost >= dynamic_list[i]['emergence'] and check_collision((current, neighbor), [d.get('location') for d in dynamic_list]):
+          print("Collision with Dynamic Obstacle")
+          print(current)
+          print(neighbor)
+          print()
+          collision = True
+          break
+      if collision:
         continue
       # distance can equate to time- g(n)
       # True False on blocked spaces can relate to g(n)
@@ -123,7 +128,8 @@ def main():
   print("-----------------------------------------------")
 
   print("---GRAPH INFO---")
-  #define dynamic obstacle(s) : 1 for env 3
+  #define dynamic obstacles
+  #random #? random locations?
   dynamic_obstacles = list()
   dynamic_obstacles.append({"location": [goal[0][0]-1, goal[0][1]-2], "emergence": 3})
   print(dynamic_obstacles)
