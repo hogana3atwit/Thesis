@@ -18,6 +18,7 @@ def connect_points(points):
 
   return edges
 
+# check methods that distinguish interior from border points
 def check_collision(edge, obstacles):
   print(edge)
   line = geometry.LineString([(edge[0].x, edge[0].y), (edge[1].x, edge[1].y)])
@@ -28,14 +29,18 @@ def check_collision(edge, obstacles):
     print(inter)
     inter_points = list(inter.coords)
     print(inter_points)
-    if len(inter_points) >= 2:
+    if len(inter_points) > 2:
       return True
+    elif len(inter_points) == 2:
+      if ( inter_points[0][0] != int(inter_points[0][0]) or inter_points[0][1] != int(inter_points[0][1]) or inter_points[1][0] != int(inter_points[1][0]) or inter_points[1][1] != int(inter_points[1][1]) ) or ( [inter_points[0][0], inter_points[0][1]] in obstacles or [inter_points[1][0], inter_points[1][1]] in obstacles ):
+        return True
   return False
 
 def heuristic(node, goal):
   return abs(node.x - goal.x) + abs(node.y - goal.y)
 
 def astar(start, goal, graph):
+  #print("A* Start")
   #print(start)
   #print(goal)
 
@@ -56,8 +61,9 @@ def astar(start, goal, graph):
       while parents[current] is not None:
         current = parents[current]
         path.append(current)
-        print(path[::-1])
-        return
+      print("Full Path")
+      print(path[::-1])
+      return
       # find neighbors of current point
     neighbors = []
     for edge in graph:
@@ -66,6 +72,8 @@ def astar(start, goal, graph):
     #print("NEIGHBORS")
     #print(neighbors)
     for neighbor in neighbors:
+      #print("Trying Current Edge")
+      #print([current, neighbor])
       cost = costs[current] + (abs(current.x - neighbor.x) + abs(current.y - neighbor.y))
       #print(cost)
       if neighbor not in costs or cost < costs[neighbor]:
