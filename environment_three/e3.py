@@ -6,10 +6,6 @@ import heapq as heap
 import operator as op
 import shapely.geometry as geometry
 
-# define dynamic obstacle (1) - start with putting it somewhere close to the goal at a hardcoded position 
-# have to find a way to represent time- "after x time interval, the dynamic obstacle appears"
-# distance and time notion in edge list (before calling A*)
-
 def findLocation(state, target):
   return [ [x, y] for x, row in enumerate(state) for y, i in enumerate(row) if target in i ]
 
@@ -22,6 +18,10 @@ def connect_points(points):
 
   return edges
 
+def is_interior(p):
+  if p != int(p):
+    return True
+
 def check_collision(edge, obstacles):
   print(edge)
   line = geometry.LineString([(edge[0].x, edge[0].y), (edge[1].x, edge[1].y)])
@@ -31,12 +31,18 @@ def check_collision(edge, obstacles):
     print(inter)
     inter_points = list(inter.coords)
     print(inter_points)
-    if len(inter_points) >= 2:
+    if len(inter_points) > 2:
       return True
+    elif len(inter_points) == 2:
+      if ( is_interior(inter_points[0][0]) or is_interior(inter_points[0][1]) or is_interior(inter_points[1][0]) or is_interior(inter_points[1][1]) ) or ( [inter_points[0][0], inter_points[0][1]] in obstacles or [inter_points[1][0], inter_points[1][1]] in obstacles ):
+        return True
   return False
 
 def heuristic(node, goal):
   return abs(node.x - goal.x) + abs(node.y - goal.y)
+
+def build_dict(seq, key):
+  return dict((d[key], dict(d, index=index)) for (index, d) in enumerate(seq))
 
 def astar(start, goal, graph, dynamic_list):
   #print(start)
@@ -51,18 +57,20 @@ def astar(start, goal, graph, dynamic_list):
 
   while open_list:
     current = heap.heappop(open_list)[1]
-
     # returns path when goal is reached
     if current == goal:
       path = [current]
       while parents[current] is not None:
         current = parents[current]
         path.append(current)
-        print(path[::-1])
-        return
+      print("Full Path")
+      print(path[::-1])
+      return
     # find neighbors of current point
     neighbors = []
     for edge in graph:
+      if edge['blocked'] == True:
+        continue
       if edge['edge'][0] == current:
         neighbors.append(edge['edge'][1])
     # check obstacle list for dynamic obstacles
@@ -75,6 +83,13 @@ def astar(start, goal, graph, dynamic_list):
         print(current)
         print(neighbor)
         print()
+        # change edges with dynamic collision to blocked-find way to look up blocked property of edge in graph list
+        find_blocked = build_dict(graph, key="edge")
+        edge_blocked = find_blocked.get((current, neighbor))
+        print(edge_blocked)
+        graph[edge_blocked['index']]['blocked'] = True
+        for i in range(0, len(graph)):
+          print(graph[i])
         continue
       # distance can equate to time- g(n)
       # True False on blocked spaces can relate to g(n)

@@ -18,7 +18,10 @@ def connect_points(points):
 
   return edges
 
-# check methods that distinguish interior from border points
+def is_interior(p):
+  if p != int(p):
+    return True
+
 def check_collision(edge, obstacles):
   print(edge)
   line = geometry.LineString([(edge[0].x, edge[0].y), (edge[1].x, edge[1].y)])
@@ -32,7 +35,7 @@ def check_collision(edge, obstacles):
     if len(inter_points) > 2:
       return True
     elif len(inter_points) == 2:
-      if ( inter_points[0][0] != int(inter_points[0][0]) or inter_points[0][1] != int(inter_points[0][1]) or inter_points[1][0] != int(inter_points[1][0]) or inter_points[1][1] != int(inter_points[1][1]) ) or ( [inter_points[0][0], inter_points[0][1]] in obstacles or [inter_points[1][0], inter_points[1][1]] in obstacles ):
+      if ( is_interior(inter_points[0][0]) or is_interior(inter_points[0][1]) or is_interior(inter_points[1][0]) or is_interior(inter_points[1][1]) ) or ( [inter_points[0][0], inter_points[0][1]] in obstacles or [inter_points[1][0], inter_points[1][1]] in obstacles ):
         return True
   return False
 
