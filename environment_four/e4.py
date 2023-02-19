@@ -22,6 +22,10 @@ def connect_points(points):
 
   return edges
 
+def is_interior(p):
+  if p != int(p):
+    return True
+
 def check_collision(edge, obstacles):
   print(edge)
   line = geometry.LineString([(edge[0].x, edge[0].y), (edge[1].x, edge[1].y)])
@@ -31,12 +35,18 @@ def check_collision(edge, obstacles):
     print(inter)
     inter_points = list(inter.coords)
     print(inter_points)
-    if len(inter_points) >= 2:
+    if len(inter_points) > 2:
       return True
+    elif len(inter_points) == 2:
+      if ( is_interior(inter_points[0][0]) or is_interior(inter_points[0][1]) or is_interior(inter_points[1][0]) or is_interior(inter_points[1][1]) ) or ( [inter_points[0][0], inter_points[0][1]] in obstacles or [inter_points[1][0], inter_points[1][1]] in obstacles ):
+        return True
   return False
 
 def heuristic(node, goal):
   return abs(node.x - goal.x) + abs(node.y - goal.y)
+
+def build_dict(seq, key):
+  return dict((d[key], dict(d, index=index)) for (index, d) in enumerate(seq))
 
 def astar(start, goal, graph, dynamic_list):
   #print(start)
@@ -58,11 +68,14 @@ def astar(start, goal, graph, dynamic_list):
       while parents[current] is not None:
         current = parents[current]
         path.append(current)
-        print(path[::-1])
-        return
+      print("Full Path")
+      print(path[::-1])
+      return
     # find neighbors of current point
     neighbors = []
     for edge in graph:
+      if edge['blocked'] == True:
+        continue
       if edge['edge'][0] == current:
         neighbors.append(edge['edge'][1])
     # check obstacle list for dynamic obstacles
@@ -77,6 +90,13 @@ def astar(start, goal, graph, dynamic_list):
           print(current)
           print(neighbor)
           print()
+          # change edges with dynamic collision to blocked-find way to look up blocked property of edge in graph list
+          find_blocked = build_dict(graph, key="edge")
+          edge_blocked = find_blocked.get((current, neighbor))
+          print(edge_blocked)
+          graph[edge_blocked['index']]['blocked'] = True
+          for i in range(0, len(graph)):
+            print(graph[i])
           collision = True
           break
       if collision:
@@ -132,6 +152,8 @@ def main():
   #random #? random locations?
   dynamic_obstacles = list()
   dynamic_obstacles.append({"location": [goal[0][0]-1, goal[0][1]-2], "emergence": 3})
+  dynamic_obstacles.append({"location": [goal[0][0]-2, goal[0][1]-1], "emergence": 5})
+  dynamic_obstacles.append({"location": [goal[0][0]-1, goal[0][1]-3], "emergence": 7})
   print(dynamic_obstacles)
 
   graph_vertices = list()
@@ -208,6 +230,6 @@ def main():
   print("---A*---")
   # run A* for static worlds
   astar(final_graph[0], final_graph[len(final_graph)-1], final_edges, dynamic_obstacles)
-
+  print(dynamic_obstacles)
 if __name__ == "__main__":
   main()
