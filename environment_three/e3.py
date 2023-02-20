@@ -107,7 +107,9 @@ def main():
     stripped = line.strip()
     if not stripped: break
     lines.append(stripped)
-  
+  print(lines)
+  print(lines[1][10])
+  sys.exit(1)
   print("---ENVIRONMENT INFO---")
   rows = len(lines)
   print(rows)
