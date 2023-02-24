@@ -72,7 +72,104 @@ def heuristic(node, goal):
 def build_dict(seq, key):
   return dict((d[key], dict(d, index=index)) for (index, d) in enumerate(seq))
 
-def astar(start, goal, graph, dynamic_list):
+def get_neighbors(current, graph, dynamic_list):
+  neighbors = []
+  for edge in graph:
+    if edge['blocked']:
+      continue
+    if edge['edge'][0] == current:
+      neighbor = edge['edge'][1]
+      blocked_dynamic = False
+      for ob in dynamic_list:
+        if check_collision((current, neighbor), [ob]):
+          blocked_dynamic = True
+          break
+      if not blocked_dynamic:
+        cost = abs(current.x - neighbor.x) + abs(current.y - neighbor.y)
+        neighbors.append((neighbor, cost))
+  return neighbors
+
+def validate_path(path, graph, dynamic_obstacles):
+  valid_path = [path[0]]
+  print("Validate Path")
+  print(path)
+  i = 0
+  while i < len(path)-1:
+    print(i)
+    print(valid_path)
+    current_pos = valid_path[-1]
+    next_pos = path[i+1]
+    #print("Current")
+    #print(current_pos)
+    #print("Next")
+    #print(next_pos)
+    collision = False
+    for obstacle in dynamic_obstacles:
+      #print("Obstacle")
+      #print(obstacle)
+      #print("CURRENT PATH")
+      #print(valid_path)
+      if check_collision((current_pos, next_pos), [obstacle]):
+        #print("COLLISION- PATH MUST CHANGE")
+        #print(current_pos)
+        #print(next_pos)
+        #find_blocked = build_dict(graph, key="edge")
+        #edge_blocked = find_blocked.get((current_pos, next_pos))
+        #if edge_blocked is not None:
+          #graph[edge_blocked['index']]['blocked'] = True
+        
+        new_path = astar(current_pos, path[-1], graph)
+        if new_path is not None:
+          valid_path = valid_path[:-1] + new_path
+          i = valid_path.index(current_pos)
+        collision = True
+        break
+    if not collision:
+      if current_pos != next_pos:
+        valid_path.append(next_pos)
+      i += 1
+  return valid_path
+
+def astar(start, goal, graph):
+  #print("A* Start")
+  #print(start)
+  #print(goal)
+
+  open_list = []
+  heap.heappush(open_list, (0, start))
+
+  costs = {start: 0}
+
+  parents = {start: None}
+
+  while open_list:
+    current = heap.heappop(open_list)[1]
+
+    # returns path when goal is reached
+    if current == goal:
+      path = [current]
+      while parents[current] is not None:
+        current = parents[current]
+        path.append(current)
+      print("Full Path")
+      print(path[::-1])
+      return path[::-1]
+      # find neighbors of current point
+    neighbors = []
+    for edge in graph:
+      if edge['blocked'] == True:
+        continue
+      if edge['edge'][0] == current:
+        neighbors.append(edge['edge'][1])
+    for neighbor in neighbors:
+      cost = costs[current] + (abs(current.x - neighbor.x) + abs(current.y - neighbor.y))
+      if neighbor not in costs or cost < costs[neighbor]:
+        costs[neighbor] = cost
+        parents[neighbor] = current
+        heap.heappush(open_list, (cost + heuristic(neighbor, goal), neighbor))
+  print("never got to goal")
+
+def astar_old(start, goal, graph, dynamic_list):
   #print(start)
   #print(goal)
 
@@ -175,7 +272,6 @@ def main():
   #random #? random locations?
   dynamic_obstacles = random_obstacles(rows, columns, lines, agent, goal, blocked)
   print(dynamic_obstacles)
-  sys.exit(1)
   graph_vertices = list()
   # build meaningful corners for visibility graph
   for i in range(0, len(obstacles)):
@@ -248,8 +344,15 @@ def main():
 
   print("-----------------------------------------------")
   print("---A*---")
-  # run A* for static worlds
-  astar(final_graph[0], final_graph[len(final_graph)-1], final_edges, dynamic_obstacles)
+  first_path = astar(final_graph[0], final_graph[len(final_graph)-1], final_edges)
+  print(blocked)
+  final_path = validate_path(first_path, final_edges, dynamic_obstacles)
+  print("Dynamic Obstacles")
   print(dynamic_obstacles)
+  print("Original Path")
+  print(first_path)
+  print("Validated Path")
+  print(final_path)
+  #print(dynamic_obstacles)
 if __name__ == "__main__":
   main()

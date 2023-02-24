@@ -72,13 +72,8 @@ def astar(start, goal, graph):
     for edge in graph:
       if edge[0] == current:
         neighbors.append(edge[1])
-    #print("NEIGHBORS")
-    #print(neighbors)
     for neighbor in neighbors:
-      #print("Trying Current Edge")
-      #print([current, neighbor])
       cost = costs[current] + (abs(current.x - neighbor.x) + abs(current.y - neighbor.y))
-      #print(cost)
       if neighbor not in costs or cost < costs[neighbor]:
         costs[neighbor] = cost
         parents[neighbor] = current
