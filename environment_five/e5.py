@@ -6,10 +6,7 @@ import heapq as heap
 import operator as op
 import shapely.geometry as geometry
 import random
-
-# define dynamic obstacle (1) - start with putting it somewhere close to the goal at a hardcoded position 
-# have to find a way to represent time- "after x time interval, the dynamic obstacle appears"
-# distance and time notion in edge list (before calling A*)
+import math
 
 def findLocation(state, target):
   return [ [x, y] for x, row in enumerate(state) for y, i in enumerate(row) if target in i ]
@@ -29,13 +26,15 @@ def is_interior(p):
 
 def random_obstacles(row, column, environment, start, goal, blocked):
   dynamic_obstacles = []
-  num_obstacles = random.randint(3, 5)
+  #num_obstacles = random.randint(3, 5)
+  num_obstacles = 2 
   for i in range(num_obstacles):
     obstacle_placed = False
     while not obstacle_placed:
       # generate obstacle location
       cur_obstacle = [random.randint(0, row-1), random.randint(0, column-1)]
-      if cur_obstacle == start or cur_obstacle == goal:
+      print(cur_obstacle)
+      if cur_obstacle == start[0] or cur_obstacle == goal[0]:
         continue
       if cur_obstacle in blocked:
         continue
@@ -89,6 +88,7 @@ def get_neighbors(current, graph, dynamic_list):
         neighbors.append((neighbor, cost))
   return neighbors
 
+# not finding dynamic obstacle on one edge of path
 def validate_path(path, graph, dynamic_obstacles):
   valid_path = [path[0]]
   print("Validate Path")
@@ -113,27 +113,40 @@ def validate_path(path, graph, dynamic_obstacles):
         #print("COLLISION- PATH MUST CHANGE")
         #print(current_pos)
         #print(next_pos)
-        #find_blocked = build_dict(graph, key="edge")
-        #edge_blocked = find_blocked.get((current_pos, next_pos))
-        #if edge_blocked is not None:
-          #graph[edge_blocked['index']]['blocked'] = True
+        find_blocked = build_dict(graph, key="edge")
+        edge_blocked = find_blocked.get((current_pos, next_pos))
+        if edge_blocked is not None:
+          graph[edge_blocked['index']]['blocked'] = True
         
         new_path = astar(current_pos, path[-1], graph)
+        # check for no valid path as no solution case
         if new_path is not None:
-          valid_path = valid_path[:-1] + new_path
-          i = valid_path.index(current_pos)
-        collision = True
-        break
+          collision_index = i + 1
+          while collision_index < len(path) - 1 and check_collision((current_pos, path[collision_index + 1]), [obstacle]):
+            collision_index += 1
+          valid_path = valid_path[:-1] + new_path[new_path.index(current_pos) : new_path.index(path[collision_index]) + 1]
+          i = collision_index - 1
+	
+          collision = True
+        if collision:
+          break
+        if new_path is None:
+          print("Environment unsolvable")
+          print(dynamic_obstacles)
+          sys.exit(1)
     if not collision:
-      if current_pos != next_pos:
-        valid_path.append(next_pos)
+      valid_path.append(next_pos)
       i += 1
   return valid_path
 
+# math.sqrt is expensive
+def euclidean_distance(p1, p2):
+  return math.sqrt((p1.x-p2.x) ** 2 + (p1.y - p2.y) ** 2)
+
 def astar(start, goal, graph):
-  #print("A* Start")
-  #print(start)
-  #print(goal)
+  print("A* Start")
+  print(start)
+  print(goal)
 
   open_list = []
   heap.heappush(open_list, (0, start))
@@ -270,6 +283,7 @@ def main():
   print("---GRAPH INFO---")
   #define dynamic obstacles
   #random #? random locations?
+  #dynamic_obstacles = [ [1, 9] ]
   dynamic_obstacles = random_obstacles(rows, columns, lines, agent, goal, blocked)
   print(dynamic_obstacles)
   graph_vertices = list()
@@ -291,7 +305,6 @@ def main():
       if count <= 1:
         if cur_point not in graph_vertices:
           graph_vertices.append(cur_point)
-
   final_graph = list()
   for i in range(0, len(graph_vertices)):
     cur_vert = graph_vertices[i]
@@ -316,12 +329,17 @@ def main():
   print(final_graph)
   for i in range(0, len(final_graph)):
     print(final_graph[i])
-
   # connect edges of graph
   edges = connect_points(final_graph)
+  #for i in range(0, len(edges)):
+    #if [edges[i][0].x, edges[i][0].y] in agent and [edges[i][1].x, edges[i][1].y] in goal:
+      #del edges[i]
+      #break
+
   for i in range(0, len(edges)):
     print(edges[i])
-  
+
+  #sys.exit(1)
   print("-----------------------------------------------")
   print("---COLLISION DETECTION---")
   #check and filter out edges with collisions
