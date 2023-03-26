@@ -91,12 +91,12 @@ def get_neighbors(current, graph, dynamic_list):
 # not finding dynamic obstacle on one edge of path
 def validate_path(path, graph, dynamic_obstacles):
   valid_path = [path[0]]
-  print("Validate Path")
-  print(path)
+  #print("Validate Path")
+  #print(path)
   i = 0
   while i < len(path)-1:
-    print(i)
-    print(valid_path)
+    #print(i)
+    #print(valid_path)
     current_pos = valid_path[-1]
     next_pos = path[i+1]
     #print("Current")

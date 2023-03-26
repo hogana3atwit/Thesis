@@ -5,6 +5,7 @@ from collections import defaultdict
 import heapq as heap
 import operator as op
 import shapely.geometry as geometry
+import math
 
 def findLocation(state, target):
   return [ [x, y] for x, row in enumerate(state) for y, i in enumerate(row) if target in i ]
@@ -27,7 +28,7 @@ def check_collision(edge, obstacles):
   line = geometry.LineString([(edge[0].x, edge[0].y), (edge[1].x, edge[1].y)])
   for ob in obstacles:
     p = geometry.Polygon([[ob[0], ob[1]], [ob[0], ob[1]+1], [ob[0]+1, ob[1]+1], [ob[0]+1, ob[1]]])
-    #print(p)
+    print(p)
     inter = line.intersection(p)
     print(inter)
     inter_points = list(inter.coords)
@@ -35,12 +36,15 @@ def check_collision(edge, obstacles):
     if len(inter_points) > 2:
       return True
     elif len(inter_points) == 2:
-      if ( is_interior(inter_points[0][0]) or is_interior(inter_points[0][1]) or is_interior(inter_points[1][0]) or is_interior(inter_points[1][1]) ) or ( [inter_points[0][0], inter_points[0][1]] in obstacles or [inter_points[1][0], inter_points[1][1]] in obstacles ):
+      if ( is_interior(inter_points[0][0]) or is_interior(inter_points[0][1]) or is_interior(inter_points[1][0]) or is_interior(inter_points[1][1]) ) or ( [inter_points[0][0], inter_points[0][1]] in obstacles or [inter_points[1][0], inter_points[1][1]] in obstacles ) or ( inter_points[0][0] != inter_points[1][0] and inter_points[0][1] != inter_points[1][1] ):
         return True
   return False
 
 def heuristic(node, goal):
   return abs(node.x - goal.x) + abs(node.y - goal.y)
+
+def euclidean_distance(p1, p2):
+  return math.sqrt((p1.x-p2.x) ** 2 + (p1.y - p2.y) ** 2)
 
 def astar(start, goal, graph):
   #print("A* Start")
@@ -74,6 +78,7 @@ def astar(start, goal, graph):
         neighbors.append(edge[1])
     for neighbor in neighbors:
       cost = costs[current] + (abs(current.x - neighbor.x) + abs(current.y - neighbor.y))
+      #cost = costs[current] + euclidean_distance(current, neighbor)
       if neighbor not in costs or cost < costs[neighbor]:
         costs[neighbor] = cost
         parents[neighbor] = current
@@ -165,7 +170,6 @@ def main():
   edges = connect_points(final_graph)
   for i in range(0, len(edges)):
     print(edges[i])
-
   print(blocked)
   #check and filter out edges with collisions
   #wall_line = geometry.LineString([rows, 0], [rows, columns]
@@ -177,7 +181,6 @@ def main():
     if cur_check == False:
       if edges[i] not in final_edges:
         final_edges.append(edges[i])
-  
   for i in range(len(final_edges)):
     print(final_edges[i])
 
