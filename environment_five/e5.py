@@ -61,7 +61,7 @@ def check_collision(edge, obstacles):
     if len(inter_points) > 2:
       return True
     elif len(inter_points) == 2:
-      if ( is_interior(inter_points[0][0]) or is_interior(inter_points[0][1]) or is_interior(inter_points[1][0]) or is_interior(inter_points[1][1]) ) or ( [inter_points[0][0], inter_points[0][1]] in obstacles or [inter_points[1][0], inter_points[1][1]] in obstacles ):
+      if ( is_interior(inter_points[0][0]) or is_interior(inter_points[0][1]) or is_interior(inter_points[1][0]) or is_interior(inter_points[1][1]) ) or ( [inter_points[0][0], inter_points[0][1]] in obstacles or [inter_points[1][0], inter_points[1][1]] in obstacles ) or ( inter_points[0][0] != inter_points[1][0] and inter_points[0][1] != inter_points[1][1] ):
         return True
   return False
 
@@ -283,8 +283,8 @@ def main():
   print("---GRAPH INFO---")
   #define dynamic obstacles
   #random #? random locations?
-  #dynamic_obstacles = [ [1, 9] ]
-  dynamic_obstacles = random_obstacles(rows, columns, lines, agent, goal, blocked)
+  dynamic_obstacles = [ [2, 2], [2, 1] ]
+  #dynamic_obstacles = random_obstacles(rows, columns, lines, agent, goal, blocked)
   print(dynamic_obstacles)
   graph_vertices = list()
   # build meaningful corners for visibility graph

@@ -1,5 +1,5 @@
 import pygame
-from e2 import main
+from e5 import main
 import sys
 import logging
 
@@ -86,75 +86,37 @@ def select_obstacle_points(path_points, obstacles, grid):
 
 # ASCII grid
 
-grid_00 = [
+grid_ = [
+    "__@_####################",
+    "____________##______#__#",
+    "________________#______#",
+    "##__________############",
+    "__#__##_____############",
+    "#__#__________##########",
+    "_____##_____G###########",
+    "__##____#____###########",
+    "########################",
+]
+
+grid = [
     "__@_###############______#",
     "________________#______###",
     "##______##_###############",
     "#_#______#_##___##########",
     "#__#_____#__#___##########",
-    "#__________#_##__#########",
+    "#________________#########",
     "##____________G___________",
     "##########################",
 ]
 
-grid = [
-    "_#___@__#____#_____#",
-    "___###___#_#______#_",
-    "__#_#_______###____#",
-    "_###__##_##__##_____",
-    "###__#_#___#________",
-    "____________#___#___",
-    "#_____#_##__#_______",
-    "___##__#______#_#___",
-    "_____#__##_##_##_##_",
-    "_G___##_#___#_#_____",
-    "#___#____#___#__#___",
-    "####################",
-]
-
-grid_ = [
-    "__@_####################",
-    "_#__________##______#__#",
-    "___#____________#______#",
-    "##____##################",
-    "__#__##_____############",
-    "#__#__________##########",
-    "_____##_____G###########",
-    "__##____#____###########",
-    "########################"
-]
-
-grid_3 = [
-    "_#___@__#____#_____#____#_###_#___________",
-    "___###___#_#______#____#_#_____#____#__##_",
-    "__#_#_______###____#_###_#___#_###__##__#_",
-    "_###__##_##__##________#___#__###____#__#_",
-    "###__#_#___#___________________#_____##___",
-    "____________#___#___##______##_#_______##_",
-    "#_____#_##__#_______###__#_____________#_#",
-    "___##__#______#_#___##__#####_#_##___##___",
-    "_____#__##_##_##_##__##__#______##________",
-    "_____##_#___#_#______#_#_##_____#__##_____",
-    "#___#____#___#__#__##___####_#_#_###_____G",
-    "##########################################",
-]
-
-grid_0 = [
-    "___@",
-    "#___",
-    "___#",
-    "#__G",
-]
-
 grid_2 = [
-    "@_#_____",
-    "___#____",
-    "_#______",
-    "___##___",
-    "_____#__",
-    "_#_#__#_",
-    "___#____",
-    "__#__G__",
+    "@___#______##______",
+    "#_______________#__",
+    "#_#_________##_____",
+    "##_#__#_##_________",
+    "#__##_#___________#",
+    "##########_______G_",
+    "###################",
 ]
 
 # Window dimensions and grid size
@@ -170,13 +132,12 @@ columns = len(grid[0])
 #print(rows)
 #print(columns)
 # Calculate cell size
-#cell_width = width // grid_size
-#cell_height = height // grid_size
 cell_width = 50
 cell_height = 50
 
 width = columns * cell_width
 height = rows * cell_height
+
 # Initialize Pygame window
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("ASCII to Pygame")
@@ -189,6 +150,8 @@ circle_radius = rect_size // 4
 agent_location = None
 goal_location = None
 
+font_size = 20
+font = pygame.font.Font(None, font_size)
 # Main loop
 running = True
 while running:
@@ -231,17 +194,33 @@ while running:
                 goal_location = (x + cell_width // 2, y + cell_height // 2)
     #print(agent_location)
     #print(goal_location)
+    #sys.exit(1)
     # Draw path
     # Automate path with A* in solver function
     if agent_location and goal_location:
         #full_path = [agent_location] + path_screen_coords + [goal_location]
-        path = main(grid)
+        path, dynamic_obstacles, valid_path = main(grid)
         print(path)
-        full_path = [agent_location] + select_obstacle_points(path[1:len(path)-1], obstacles, grid) + [goal_location]
-        print(full_path)
+        first_path = [agent_location] + select_obstacle_points(path[1:len(path)-1], obstacles, grid) + [goal_location]
+        print(first_path)
         print(obstacles)
-        pygame.draw.lines(screen, (0, 0, 255), False, full_path, 3)
+        print(dynamic_obstacles)
+        pygame.draw.lines(screen, (255, 0, 0), False, first_path, 3)
 
+        final_path = [agent_location] + select_obstacle_points(valid_path[1:len(valid_path)-1], obstacles, grid) + [goal_location]
+        print(final_path)
+        pygame.draw.lines(screen, (0, 255, 0), False, final_path, 3)
+        dynamic_color = (255, 0, 255)
+        for ob in dynamic_obstacles:
+          row, col = ob
+          x, y = col * cell_width, row * cell_height
+          pygame.draw.rect(screen, dynamic_color, (x + (cell_width - rect_size) // 2, y + (cell_height - rect_size) // 2, rect_size, rect_size))
+          #emergence_text = font.render(str(ob["emergence"]), True, (0, 0, 0))
+          #text_width, text_height = emergence_text.get_size()
+          #text_x = x + (cell_width - text_width) // 2
+          #text_y = y + (cell_height - text_height) // 2
+          #screen.blit(emergence_text, (text_x, text_y))
+    
     pygame.display.flip()
 
 pygame.quit()

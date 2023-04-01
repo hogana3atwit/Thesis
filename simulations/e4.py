@@ -70,7 +70,7 @@ def astar(start, goal, graph, dynamic_list):
         path.append(current)
       print("Full Path")
       print(path[::-1])
-      return
+      return path[::-1], dynamic_list
     # find neighbors of current point
     neighbors = []
     for edge in graph:
@@ -110,15 +110,18 @@ def astar(start, goal, graph, dynamic_list):
       print()
   print("never got to goal")
 
-def main():
+def full_path(start, goal, graph, dynamic):
+  return astar(start, goal, graph, dynamic)
+
+def main(env):
   #read in environment
-  lines = []
-  for line in sys.stdin:
-    stripped = line.strip()
-    if not stripped: break
-    lines.append(stripped)
+  lines = env
+  #for line in sys.stdin:
+    #stripped = line.strip()
+    #if not stripped: break
+    #lines.append(stripped)
   
-  print("---ENVIRONMENT INFO---")
+  #print("---ENVIRONMENT INFO---")
   rows = len(lines)
   print(rows)
   calc_columns = list()
@@ -229,6 +232,7 @@ def main():
   print("-----------------------------------------------")
   print("---A*---")
   astar(final_graph[0], final_graph[len(final_graph)-1], final_edges, dynamic_obstacles)
-  print(dynamic_obstacles)
+  return full_path(final_graph[0], final_graph[len(final_graph)-1], final_edges, dynamic_obstacles)
+
 if __name__ == "__main__":
-  main()
+  main(env)
